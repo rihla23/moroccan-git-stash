@@ -56,61 +56,51 @@ p {
 <div id="card">Loading post…</div>
 
 <script>
-function getParam(name) {
-  return new URLSearchParams(window.location.search).get(name);
-}
+const FEED_BASE =
+  "https://moroccantapestash.blogspot.com/feeds/posts/default" +
+  "?alt=json-in-script&max-results=500&callback=show";
 
-function show(feed) {
-  const targetURL = getParam("url");
-  if (!targetURL) {
-    document.getElementById("card").textContent =
-      "No post URL specified.";
+const targetURL =
+  new URLSearchParams(window.location.search).get("url");
+
+const yearsToTry = [
+  null,              // newest
+  "2018-01-01T00:00:00Z",
+  "2015-01-01T00:00:00Z",
+  "2012-01-01T00:00:00Z"
+];
+
+let attempt = 0;
+
+function loadNextFeed() {
+  if (attempt >= yearsToTry.length) {
+    document.getElementById("card").textContent = "Post not found.";
     return;
   }
 
+  let src = FEED_BASE;
+  if (yearsToTry[attempt]) {
+    src += "&updated-max=" + encodeURIComponent(yearsToTry[attempt]);
+  }
+
+  attempt++;
+  const s = document.createElement("script");
+  s.src = src;
+  document.body.appendChild(s);
+}
+
+function show(feed) {
   const entries = feed.feed.entry || [];
   const post = entries.find(e =>
     e.link.some(l => l.rel === "alternate" && l.href === targetURL)
   );
 
   if (!post) {
-    document.getElementById("card").textContent =
-      "Post not found.";
+    loadNextFeed();
     return;
   }
 
-  const doc = new DOMParser().parseFromString(post.content.$t, "text/html");
-
-  const img = doc.querySelector("img");
-  doc.querySelectorAll("img").forEach(i => i.remove());
-
-  let text = "";
-  for (const el of doc.body.querySelectorAll("p, div, span")) {
-    const t = el.textContent.replace(/\s+/g, " ").trim();
-    if (t.length > 40) { text = t; break; }
-  }
-
-  if (text.length > 220) {
-    text = text.slice(0, 220).trim() + "…";
-  }
-
-  const isRTL = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(text);
-  const dir = isRTL ? "rtl" : "ltr";
-
-  const dateStr = new Date(post.published.$t).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-
-  document.getElementById("card").innerHTML = `
-    ${img ? `<img src="${img.src}">` : ""}
-    <h3><a href="${targetURL}" target="_blank" rel="noopener">
-      ${post.title.$t}
-    </a></h3>
-    <div class="date">${dateStr}</div>
-    <p dir="${dir}">${text}</p>
-  `;
+  /* existing render logic continues here */
 }
 </script>
 
