@@ -64,7 +64,7 @@ const targetURL =
   new URLSearchParams(window.location.search).get("url");
 
 const yearsToTry = [
-  null,              // newest
+  null,
   "2018-01-01T00:00:00Z",
   "2015-01-01T00:00:00Z",
   "2012-01-01T00:00:00Z"
@@ -84,6 +84,7 @@ function loadNextFeed() {
   }
 
   attempt++;
+
   const s = document.createElement("script");
   s.src = src;
   document.body.appendChild(s);
@@ -100,11 +101,45 @@ function show(feed) {
     return;
   }
 
-  /* existing render logic continues here */
-}
-</script>
+  // ---- RENDER LOGIC (RESTORED) ----
 
-<script src="https://moroccantapestash.blogspot.com/feeds/posts/default?alt=json-in-script&max-results=500&callback=show"></script>
+  const doc = new DOMParser().parseFromString(post.content.$t, "text/html");
+
+  const img = doc.querySelector("img");
+  doc.querySelectorAll("img").forEach(i => i.remove());
+
+  let text = "";
+  for (const el of doc.body.querySelectorAll("p, div, span")) {
+    const t = el.textContent.replace(/\s+/g, " ").trim();
+    if (t.length > 40) { text = t; break; }
+  }
+
+  if (text.length > 220) {
+    text = text.slice(0, 220).trim() + "…";
+  }
+
+  const isRTL = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(text);
+  const dir = isRTL ? "rtl" : "ltr";
+
+  const dateStr = new Date(post.published.$t).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+
+  document.getElementById("card").innerHTML = `
+    ${img ? `<img src="${img.src}">` : ""}
+    <h3><a href="${targetURL}" target="_blank" rel="noopener">
+      ${post.title.$t}
+    </a></h3>
+    <div class="date">${dateStr}</div>
+    <p dir="${dir}">${text}</p>
+  `;
+}
+
+// Start the paging process
+loadNextFeed();
+</script>
 
 </body>
 </html>
