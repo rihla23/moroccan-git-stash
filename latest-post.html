@@ -8,7 +8,6 @@
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
-  padding: 0;
 }
 img {
   max-width: 100%;
@@ -19,24 +18,16 @@ img {
 
 <body>
 
-<div id="latest-post">
-  Loading latest post…
-</div>
+<div id="post">Loading latest post…</div>
 
 <script>
-function showLatest(feed) {
-  if (!feed.entry || !feed.entry.length) return;
-
+function show(feed) {
   const post = feed.entry[0];
-  const content = post.content.$t;
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(content, "text/html");
-
+  const doc = new DOMParser().parseFromString(post.content.$t, "text/html");
   const img = doc.querySelector("img");
   const p = doc.querySelector("p");
 
-  document.getElementById("latest-post").innerHTML = `
+  document.getElementById("post").innerHTML = `
     <h3>${post.title.$t}</h3>
     ${img ? `<img src="${img.src}">` : ""}
     ${p ? `<p>${p.textContent}</p>` : ""}
@@ -44,7 +35,7 @@ function showLatest(feed) {
 }
 </script>
 
-<script src="https://moroccantapestash.blogspot.com/feeds/posts/default?alt=json-in-script&max-results=1&callback=showLatest"></script>
+<script src="https://moroccantapestash.blogspot.com/feeds/posts/default?alt=json-in-script&max-results=1&callback=show"></script>
 
 </body>
 </html>
