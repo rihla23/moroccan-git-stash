@@ -23,22 +23,37 @@ img {
 <script>
 function show(feed) {
   if (!feed.feed || !feed.feed.entry || !feed.feed.entry.length) {
-    document.getElementById("post").textContent =
-      "No posts found.";
+    document.getElementById("post").textContent = "No posts found.";
     return;
   }
 
   const post = feed.feed.entry[0];
-  const content = post.content.$t;
+  const contentHTML = post.content.$t;
 
-  const doc = new DOMParser().parseFromString(content, "text/html");
+  const doc = new DOMParser().parseFromString(contentHTML, "text/html");
+
+  // First image (unchanged)
   const img = doc.querySelector("img");
-  const p = doc.querySelector("p");
+
+  // Remove images so text extraction is clean
+  doc.querySelectorAll("img").forEach(img => img.remove());
+
+  // Find first meaningful text block
+  let firstText = "";
+  const candidates = doc.body.querySelectorAll("p, div, span");
+
+  for (const el of candidates) {
+    const text = el.textContent.replace(/\s+/g, " ").trim();
+    if (text.length > 40) {   // avoids captions / crumbs
+      firstText = text;
+      break;
+    }
+  }
 
   document.getElementById("post").innerHTML = `
     <h3>${post.title.$t}</h3>
     ${img ? `<img src="${img.src}">` : ""}
-    ${p ? `<p>${p.textContent}</p>` : ""}
+    ${firstText ? `<p>${firstText}</p>` : ""}
   `;
 }
 </script>
