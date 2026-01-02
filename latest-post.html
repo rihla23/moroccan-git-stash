@@ -22,8 +22,16 @@ img {
 
 <script>
 function show(feed) {
-  const post = feed.entry[0];
-  const doc = new DOMParser().parseFromString(post.content.$t, "text/html");
+  if (!feed.feed || !feed.feed.entry || !feed.feed.entry.length) {
+    document.getElementById("post").textContent =
+      "No posts found.";
+    return;
+  }
+
+  const post = feed.feed.entry[0];
+  const content = post.content.$t;
+
+  const doc = new DOMParser().parseFromString(content, "text/html");
   const img = doc.querySelector("img");
   const p = doc.querySelector("p");
 
